@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estado de Cuenta</title>
+    <title>Gestión de Clientes y Cobranza</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -104,7 +104,7 @@
         }
 
         .btn {
-            padding: 0.6rem 1.2rem;
+            padding: 0.65rem 1.2rem;
             border: none;
             border-radius: 8px;
             font-size: 0.95rem;
@@ -120,7 +120,13 @@
 
         .btn-primary { background-color: var(--primary); color: white; width: 100%; }
         .btn-success { background-color: var(--success); color: white; }
-        .btn-whatsapp { background-color: var(--whatsapp); color: white; }
+        .btn-whatsapp { 
+            background-color: var(--whatsapp); 
+            color: white; 
+            width: 100%; 
+            font-size: 1rem;
+            padding: 0.8rem;
+        }
         .btn-whatsapp:hover { background-color: var(--whatsapp-hover); }
 
         .btn-warning-sm {
@@ -429,7 +435,7 @@
                 </div>
             </div>
 
-            <!-- Botón para compartir por WhatsApp -->
+            <!-- Botón de WhatsApp para el cliente -->
             <a id="btnShareClientWhatsApp" target="_blank" class="btn btn-whatsapp">
                 📲 Compartir / Enviar Estado de Cuenta por WhatsApp
             </a>
@@ -450,7 +456,7 @@
 
     </div>
 
-    <!-- MODAL DE DETALLES PARA EL ADMIN -->
+    <!-- MODAL DE DETALLES PARA EL ADMIN (Al hacer clic en la tarjeta del cliente) -->
     <div id="clientModal" class="modal-overlay" onclick="closeModalOnOverlay(event)">
         <div class="modal-content">
             <div class="modal-header">
@@ -485,7 +491,7 @@
                     </div>
                 </div>
 
-                <!-- Botón de compartir en el panel Admin -->
+                <!-- BOTÓN DE COMPARTIR POR WHATSAPP AL ABRIR EL DETALLE DE PAGO DEL CLIENTE -->
                 <a id="btnShareAdminWhatsApp" target="_blank" class="btn btn-whatsapp">
                     📲 Enviar enlace a este cliente por WhatsApp
                 </a>
@@ -604,7 +610,7 @@
             document.getElementById('singleTotalPaid').textContent = formatCurrency(totalNetPaid);
             document.getElementById('singlePendingBalance').textContent = pendingBalance <= 0 ? '¡PAGADO!' : formatCurrency(pendingBalance);
 
-            // Botón de WhatsApp
+            // Botón de WhatsApp vista cliente
             document.getElementById('btnShareClientWhatsApp').href = generateWhatsAppLink(client);
 
             // Tabla de pagos
@@ -707,7 +713,7 @@
             document.getElementById('modalTotalPaid').textContent = formatCurrency(totalNetPaid);
             document.getElementById('modalPendingBalance').textContent = pendingBalance <= 0 ? '¡PAGADO!' : formatCurrency(pendingBalance);
 
-            // Botón de WhatsApp en el modal Admin
+            // Asigna el enlace de WhatsApp al botón dentro de la modal de abonos
             document.getElementById('btnShareAdminWhatsApp').href = generateWhatsAppLink(client);
 
             const tbody = document.getElementById('modalPaymentsTableBody');
