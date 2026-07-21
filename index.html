@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Clientes y Cobranza</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #16a34a;
+            --success-hover: #15803d;
+            --warning: #d97706;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 2rem 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 950px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            color: var(--text);
+        }
+
+        header p {
+            color: var(--text-light);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* Formulario */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-group-full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            background-color: #fff;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary);
+        }
+
+        /* Botones */
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; width: 100%; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-success:hover { background-color: var(--success-hover); }
+
+        .btn-warning-sm {
+            background-color: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fde68a;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .btn-warning-sm:hover {
+            background-color: #fde68a;
+        }
+
+        .btn-danger-sm {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .btn-danger-sm:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        /* Resumen */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric-box {
+            background: #f1f5f9;
+            padding: 1.25rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-box span {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .metric-box strong {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        /* Buscador */
+        .search-input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Lista de Tarjetas */
+        .client-list-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .client-item-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .client-item-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .client-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .client-number-tag {
+            font-size: 0.75rem;
+            background: #e2e8f0;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .client-item-card h3 {
+            font-size: 1.1rem;
+            color: var(--text);
+        }
+
+        .client-item-card p {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .badge-status {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        .text-pending { color: var(--warning); }
+        .text-completed { color: var(--primary); }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            max-width: 750px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.25s ease-out;
+            border: 1px solid var(--border);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            background: #f8fafc;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .btn-close {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+            line-height: 1;
+        }
+
+        .btn-close:hover { color: var(--danger); }
+
+        .modal-body {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .modal-financials {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .fin-box label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            font-weight: 600;
+            display: block;
+        }
+
+        .fin-box span {
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        /* Formulario de Abono */
+        .add-payment-card {
+            background: #f8fafc;
+            padding: 1.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .add-payment-card h4 {
+            font-size: 1rem;
+            color: var(--text);
+        }
+
+        .payment-inputs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            align-items: end;
+        }
+
+        .payment-inputs-grid label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 0.25rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .payment-inputs-grid input {
+            padding: 0.6rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            width: 100%;
+        }
+
+        .calculation-preview {
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-weight: 600;
+            background: #eff6ff;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #bfdbfe;
+        }
+
+        /* Tabla */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.65rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .late-fee-tag {
+            color: var(--danger);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .net-credit-tag {
+            color: var(--success);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-light);
+            padding: 2rem 0;
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Gestión de Clientes y Cobranza</h1>
+            <p>Control de artículos, días de pago, domicilios y abonos</p>
+        </header>
+
+        <!-- Formulario para Registrar Nuevo Cliente -->
+        <section class="card">
+            <h2 class="card-title">Registrar Nuevo Cliente</h2>
+            <form id="newClientForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="clientNumber">N° de Cliente</label>
+                        <input type="text" id="clientNumber" placeholder="Ej. CLI-001" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="clientName">Nombre del Cliente</label>
+                        <input type="text" id="clientName" placeholder="Ej. Ana Gómez" required>
+                    </div>
+                    <div class="form-group form-group-full">
+                        <label for="clientAddress">Domicilio</label>
+                        <input type="text" id="clientAddress" placeholder="Ej. Calle Av. Hidalgo #123, Col. Centro" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemPaid">Artículo Adquirido</label>
+                        <input type="text" id="itemPaid" placeholder="Ej. Refrigerador 14 pies" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemPrice">Precio Total ($)</label>
+                        <input type="number" id="itemPrice" step="0.01" min="0" placeholder="Ej. 12000.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="weeklyAmount">Importe Semanal ($)</label>
+                        <input type="number" id="weeklyAmount" step="0.01" min="0" placeholder="Ej. 300.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="payDay">Día de Pago</label>
+                        <select id="payDay" required>
+                            <option value="">Selecciona un día...</option>
+                            <option value="Lunes">Lunes</option>
+                            <option value="Martes">Martes</option>
+                            <option value="Miércoles">Miércoles</option>
+                            <option value="Jueves">Jueves</option>
+                            <option value="Viernes">Viernes</option>
+                            <option value="Sábado">Sábado</option>
+                            <option value="Domingo">Domingo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="lateFee">Cargo por Atraso ($)</label>
+                        <input type="number" id="lateFee" step="0.01" min="0" placeholder="Ej. 50.00" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Registrar Cliente</button>
+            </form>
+        </section>
+
+        <!-- Métricas Globales -->
+        <section class="metrics-grid">
+            <div class="metric-box">
+                <span>Total de Clientes</span>
+                <strong id="totalClients">0</strong>
+            </div>
+            <div class="metric-box">
+                <span>Abono Neto Aplicado a Artículos</span>
+                <strong id="totalRevenue">$0.00</strong>
+            </div>
+        </section>
+
+        <!-- Buscador de Clientes -->
+        <section class="card">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar cliente por NOMBRE, NÚMERO DE CLIENTE o DOMICILIO...">
+        </section>
+
+        <!-- Lista de Tarjetas de Clientes -->
+        <section id="clientsListContainer" class="client-list-grid">
+            <!-- Se genera dinámicamente -->
+        </section>
+    </div>
+
+    <!-- MODAL DE DETALLES DEL CLIENTE -->
+    <div id="clientModal" class="modal-overlay" onclick="closeModalOnOverlay(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <span id="modalClientNumber" class="client-number-tag"></span>
+                    <h2 id="modalClientName" style="display:inline; margin-left:0.5rem;"></h2>
+                </div>
+                <button class="btn-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                
+                <!-- Ficha Informativa -->
+                <div class="info-grid">
+                    <div><strong>Domicilio:</strong> <span id="modalAddress"></span></div>
+                    <div><strong>Artículo:</strong> <span id="modalClientItem"></span></div>
+                    <div><strong>Día de Pago:</strong> <span id="modalPayDay"></span></div>
+                    <div><strong>Cuota Semanal:</strong> <span id="modalWeeklyAmountInfo"></span></div>
+                    <div><strong>Cargo por Atraso:</strong> <span id="modalLateFeeInfo"></span></div>
+                </div>
+
+                <!-- Métricas del Cliente -->
+                <div class="modal-financials">
+                    <div class="fin-box">
+                        <label>Precio del Artículo</label>
+                        <span id="modalTotalPrice"></span>
+                    </div>
+                    <div class="fin-box">
+                        <label>Total Abonado al Artículo</label>
+                        <span id="modalTotalPaid" style="color: var(--success);"></span>
+                    </div>
+                    <div class="fin-box">
+                        <label>Saldo Pendiente</label>
+                        <span id="modalPendingBalance"></span>
+                    </div>
+                </div>
+
+                <!-- Formulario para Registrar Nuevo Abono -->
+                <div class="add-payment-card">
+                    <h4>Registrar Pago Recibido</h4>
+                    <form id="modalAddPaymentForm">
+                        <div class="payment-inputs-grid">
+                            <div>
+                                <label for="modalPaymentAmount">Importe Entregado ($)</label>
+                                <input type="number" id="modalPaymentAmount" step="0.01" min="0" placeholder="Ej. 700.00" required>
+                            </div>
+                            <div>
+                                <label for="modalLateFeeAmount">
+                                    Cargo por Atraso ($)
+                                    <button type="button" class="btn-warning-sm" id="btnApplyDefaultLateFee" title="Aplicar recargo predeterminado">+ Aplicar</button>
+                                </label>
+                                <input type="number" id="modalLateFeeAmount" step="0.01" min="0" value="0.00" placeholder="0.00">
+                            </div>
+                            <div>
+                                <button type="submit" class="btn btn-success" style="width: 100%;">+ Guardar Abono</button>
+                            </div>
+                        </div>
+                        <div id="calcPreview" class="calculation-preview">
+                            Abono real que se restará del precio: <strong>$0.00</strong>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Historial de Pagos -->
+                <h3>Historial de Abonos</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Pago Recibido</th>
+                            <th>Cargo por Atraso</th>
+                            <th>Abono Neto al Artículo</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalPaymentsTableBody">
+                        <!-- Abonos dinámicos -->
+                    </tbody>
+                </table>
+
+                <div style="text-align: right; margin-top: 1rem;">
+                    <button class="btn-danger-sm" id="btnDeleteClient" style="padding: 0.5rem 1rem;">Eliminar Cliente Completo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Principal
+        let clients = JSON.parse(localStorage.getItem('clientsData_v7')) || [];
+        let activeClientId = null;
+
+        // Elementos DOM
+        const newClientForm = document.getElementById('newClientForm');
+        const searchInput = document.getElementById('searchInput');
+        const clientsListContainer = document.getElementById('clientsListContainer');
+        const totalClientsEl = document.getElementById('totalClients');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+
+        // Elementos Modal
+        const clientModal = document.getElementById('clientModal');
+        const modalClientNumber = document.getElementById('modalClientNumber');
+        const modalClientName = document.getElementById('modalClientName');
+        const modalAddress = document.getElementById('modalAddress');
+        const modalClientItem = document.getElementById('modalClientItem');
+        const modalPayDay = document.getElementById('modalPayDay');
+        const modalWeeklyAmountInfo = document.getElementById('modalWeeklyAmountInfo');
+        const modalLateFeeInfo = document.getElementById('modalLateFeeInfo');
+        const modalTotalPrice = document.getElementById('modalTotalPrice');
+        const modalTotalPaid = document.getElementById('modalTotalPaid');
+        const modalPendingBalance = document.getElementById('modalPendingBalance');
+        const modalPaymentsTableBody = document.getElementById('modalPaymentsTableBody');
+        const modalAddPaymentForm = document.getElementById('modalAddPaymentForm');
+        const modalPaymentAmount = document.getElementById('modalPaymentAmount');
+        const modalLateFeeAmount = document.getElementById('modalLateFeeAmount');
+        const calcPreview = document.getElementById('calcPreview');
+        const btnApplyDefaultLateFee = document.getElementById('btnApplyDefaultLateFee');
+        const btnDeleteClient = document.getElementById('btnDeleteClient');
+
+        // Formato Moneda
+        const formatCurrency = (amount) => {
+            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+        };
+
+        // Guardar
+        function saveToStorage() {
+            localStorage.setItem('clientsData_v7', JSON.stringify(clients));
+        }
+
+        // Renderizar Cuadrícula Principal
+        function renderUI(filterText = '') {
+            clientsListContainer.innerHTML = '';
+
+            const query = filterText.toLowerCase().trim();
+            const filteredClients = clients.filter(c => 
+                c.name.toLowerCase().includes(query) || 
+                c.number.toLowerCase().includes(query) ||
+                (c.address && c.address.toLowerCase().includes(query))
+            );
+
+            if (filteredClients.length === 0) {
+                clientsListContainer.innerHTML = `
+                    <div class="card empty-state">
+                        ${clients.length === 0 ? 'No hay clientes registrados aún.' : 'No se encontraron clientes que coincidan.'}
+                    </div>`;
+            } else {
+                filteredClients.forEach((client) => {
+                    // Abono neto real que se descuenta al precio del artículo
+                    const totalNetPaid = client.payments.reduce((sum, p) => sum + p.netAmount, 0);
+                    const pendingBalance = client.totalPrice - totalNetPaid;
+                    const isPaidOff = pendingBalance <= 0;
+
+                    const card = document.createElement('div');
+                    card.className = 'client-item-card';
+                    card.onclick = () => openModal(client.id);
+
+                    card.innerHTML = `
+                        <div class="client-item-header">
+                            <span class="client-number-tag">N° ${client.number}</span>
+                            <small style="color: var(--text-light); font-weight:600;">Día: ${client.payDay || 'N/A'}</small>
+                        </div>
+                        <h3>${client.name}</h3>
+                        <p><strong>Artículo:</strong> ${client.item}</p>
+                        <p><strong>Domicilio:</strong> ${client.address || 'No registrado'}</p>
+                        <p><strong>Semanal:</strong> ${formatCurrency(client.weeklyAmount || 0)}</p>
+                        <div class="badge-status ${isPaidOff ? 'text-completed' : 'text-pending'}">
+                            ${isPaidOff ? '✔ PAGADO' : 'Saldo: ' + formatCurrency(pendingBalance)}
+                        </div>
+                    `;
+                    clientsListContainer.appendChild(card);
+                });
+            }
+
+            updateMetrics();
+
+            if (activeClientId) {
+                refreshModalData();
+            }
+        }
+
+        // Actualizar métricas generales
+        function updateMetrics() {
+            const totalClients = clients.length;
+            let totalNetRevenue = 0;
+            clients.forEach(c => {
+                totalNetRevenue += c.payments.reduce((sum, p) => sum + p.netAmount, 0);
+            });
+
+            totalClientsEl.textContent = totalClients;
+            totalRevenueEl.textContent = formatCurrency(totalNetRevenue);
+        }
+
+        // Función para actualizar la previsualización del cálculo (Importe - Recargo)
+        function updateCalcPreview() {
+            const gross = parseFloat(modalPaymentAmount.value) || 0;
+            const fee = parseFloat(modalLateFeeAmount.value) || 0;
+            const net = Math.max(0, gross - fee);
+
+            calcPreview.innerHTML = `Entregado: <strong>${formatCurrency(gross)}</strong> - Recargo: <strong>${formatCurrency(fee)}</strong> = Abono Real al Artículo: <strong>${formatCurrency(net)}</strong>`;
+        }
+
+        modalPaymentAmount.addEventListener('input', updateCalcPreview);
+        modalLateFeeAmount.addEventListener('input', updateCalcPreview);
+
+        // Abrir Modal de Cliente
+        function openModal(clientId) {
+            activeClientId = clientId;
+            const client = clients.find(c => c.id === clientId);
+            if (client) {
+                modalPaymentAmount.value = client.weeklyAmount || '';
+                modalLateFeeAmount.value = '0.00';
+            }
+            updateCalcPreview();
+            refreshModalData();
+            clientModal.classList.add('active');
+        }
+
+        // Refrescar Datos en Modal
+        function refreshModalData() {
+            const client = clients.find(c => c.id === activeClientId);
+            if (!client) {
+                closeModal();
+                return;
+            }
+
+            const totalNetPaid = client.payments.reduce((sum, p) => sum + p.netAmount, 0);
+            const pendingBalance = client.totalPrice - totalNetPaid;
+            const isPaidOff = pendingBalance <= 0;
+
+            modalClientNumber.textContent = `N° ${client.number}`;
+            modalClientName.textContent = client.name;
+            modalAddress.textContent = client.address || 'N/A';
+            modalClientItem.textContent = client.item;
+            modalPayDay.textContent = client.payDay || 'N/A';
+            modalWeeklyAmountInfo.textContent = formatCurrency(client.weeklyAmount || 0);
+            modalLateFeeInfo.textContent = formatCurrency(client.lateFee || 0);
+
+            modalTotalPrice.textContent = formatCurrency(client.totalPrice);
+            modalTotalPaid.textContent = formatCurrency(totalNetPaid);
+            
+            modalPendingBalance.textContent = isPaidOff ? '¡PAGADO!' : formatCurrency(pendingBalance);
+            modalPendingBalance.className = isPaidOff ? 'text-completed' : 'text-pending';
+
+            // Cargar Tabla de Pagos
+            modalPaymentsTableBody.innerHTML = '';
+            if (client.payments.length === 0) {
+                modalPaymentsTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-light);">Sin abonos registrados.</td></tr>';
+            } else {
+                client.payments.forEach((p, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${p.date}</td>
+                        <td>${formatCurrency(p.grossAmount)}</td>
+                        <td class="late-fee-tag">${p.lateFee > 0 ? '- ' + formatCurrency(p.lateFee) : '$0.00'}</td>
+                        <td class="net-credit-tag">${formatCurrency(p.netAmount)}</td>
+                        <td>
+                            <button class="btn-danger-sm" onclick="deletePayment(${index})">Eliminar</button>
+                        </td>
+                    `;
+                    modalPaymentsTableBody.appendChild(tr);
+                });
+            }
+
+            btnApplyDefaultLateFee.onclick = () => {
+                modalLateFeeAmount.value = client.lateFee || 0;
+                updateCalcPreview();
+            };
+
+            btnDeleteClient.onclick = () => deleteClient(client.id);
+        }
+
+        // Cerrar Modal
+        function closeModal() {
+            clientModal.classList.remove('active');
+            activeClientId = null;
+        }
+
+        function closeModalOnOverlay(e) {
+            if (e.target === clientModal) {
+                closeModal();
+            }
+        }
+
+        // Guardar Nuevo Cliente
+        newClientForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const number = document.getElementById('clientNumber').value.trim();
+            const name = document.getElementById('clientName').value.trim();
+            const address = document.getElementById('clientAddress').value.trim();
+            const item = document.getElementById('itemPaid').value.trim();
+            const totalPrice = parseFloat(document.getElementById('itemPrice').value);
+            const weeklyAmount = parseFloat(document.getElementById('weeklyAmount').value);
+            const payDay = document.getElementById('payDay').value;
+            const lateFee = parseFloat(document.getElementById('lateFee').value);
+
+            const newClient = {
+                id: Date.now().toString(),
+                number: number,
+                name: name,
+                address: address,
+                item: item,
+                totalPrice: totalPrice,
+                weeklyAmount: weeklyAmount,
+                payDay: payDay,
+                lateFee: lateFee,
+                payments: []
+            };
+
+            clients.unshift(newClient);
+            saveToStorage();
+            renderUI(searchInput.value);
+
+            newClientForm.reset();
+            document.getElementById('clientNumber').focus();
+        });
+
+        // Registrar Abono (Importe - Recargo = Abono Neto)
+        modalAddPaymentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const grossAmount = parseFloat(modalPaymentAmount.value) || 0;
+            const lateFee = parseFloat(modalLateFeeAmount.value) || 0;
+            const netAmount = Math.max(0, grossAmount - lateFee);
+
+            const client = clients.find(c => c.id === activeClientId);
+            if (client && grossAmount > 0) {
+                client.payments.push({
+                    date: new Date().toLocaleDateString('es-MX'),
+                    grossAmount: grossAmount,
+                    lateFee: lateFee,
+                    netAmount: netAmount
+                });
+
+                saveToStorage();
+                renderUI(searchInput.value);
+                
+                modalPaymentAmount.value = client.weeklyAmount || '';
+                modalLateFeeAmount.value = '0.00';
+                updateCalcPreview();
+            }
+        });
+
+        // Eliminar Pago Individual
+        function deletePayment(paymentIndex) {
+            const client = clients.find(c => c.id === activeClientId);
+            if (client && confirm('¿Deseas eliminar este abono?')) {
+                client.payments.splice(paymentIndex, 1);
+                saveToStorage();
+                renderUI(searchInput.value);
+            }
+        }
+
+        // Eliminar Cliente
+        function deleteClient(clientId) {
+            if (confirm('¿Estás seguro de eliminar este cliente y todo su historial?')) {
+                clients = clients.filter(c => c.id !== clientId);
+                saveToStorage();
+                closeModal();
+                renderUI(searchInput.value);
+            }
+        }
+
+        // Buscador
+        searchInput.addEventListener('input', (e) => {
+            renderUI(e.target.value);
+        });
+
+        // Carga inicial
+        renderUI();
+    </script>
+</body>
+</html>
