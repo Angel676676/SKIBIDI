@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Clientes y Cobranza</title>
+    <!-- Carga de Firebase (Base de Datos en la Nube) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -21,308 +24,68 @@
             --danger: #ef4444;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 2rem 1rem; display: flex; justify-content: center; }
+        .container { max-width: 950px; width: 100%; display: flex; flex-direction: column; gap: 1.5rem; }
+        header { text-align: center; margin-bottom: 0.5rem; }
+        header h1 { font-size: 2rem; color: var(--text); }
+        header p { color: var(--text-light); }
 
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            padding: 2rem 1rem;
-            display: flex;
-            justify-content: center;
-        }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid var(--border); }
+        .card-title { font-size: 1.25rem; margin-bottom: 1rem; color: var(--text); font-weight: 600; }
 
-        .container {
-            max-width: 950px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 0.5rem;
-        }
-
-        header h1 {
-            font-size: 2rem;
-            color: var(--text);
-        }
-
-        header p {
-            color: var(--text-light);
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--border);
-        }
-
-        .card-title {
-            font-size: 1.25rem;
-            margin-bottom: 1rem;
-            color: var(--text);
-            font-weight: 600;
-        }
-
-        /* Formulario */
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-        }
-
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
         .form-group-full { grid-column: 1 / -1; }
+        .form-group label { font-size: 0.875rem; font-weight: 600; }
+        .form-group input, .form-group select { padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; outline: none; background-color: #fff; }
 
-        .form-group label {
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-
-        .form-group input, .form-group select {
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 1rem;
-            outline: none;
-            background-color: #fff;
-        }
-
-        .btn {
-            padding: 0.65rem 1.2rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            text-decoration: none;
-        }
-
+        .btn { padding: 0.65rem 1.2rem; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none; }
         .btn-primary { background-color: var(--primary); color: white; width: 100%; }
         .btn-success { background-color: var(--success); color: white; }
-        .btn-whatsapp { 
-            background-color: var(--whatsapp); 
-            color: white; 
-            width: 100%; 
-            font-size: 1rem;
-            padding: 0.8rem;
-        }
+        .btn-whatsapp { background-color: var(--whatsapp); color: white; width: 100%; font-size: 1rem; padding: 0.8rem; }
         .btn-whatsapp:hover { background-color: var(--whatsapp-hover); }
 
-        .btn-warning-sm {
-            background-color: #fef3c7;
-            color: #b45309;
-            border: 1px solid #fde68a;
-            padding: 0.25rem 0.5rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
+        .btn-warning-sm { background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 0.25rem 0.5rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; }
+        .btn-danger-sm { background-color: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
 
-        .btn-danger-sm {
-            background-color: transparent;
-            color: var(--danger);
-            border: 1px solid var(--danger);
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-
-        /* Métricas */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-        }
-
-        .metric-box {
-            background: #f1f5f9;
-            padding: 1.25rem;
-            border-radius: 8px;
-            text-align: center;
-        }
-
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+        .metric-box { background: #f1f5f9; padding: 1.25rem; border-radius: 8px; text-align: center; }
         .metric-box span { display: block; font-size: 0.875rem; color: var(--text-light); }
         .metric-box strong { font-size: 1.5rem; color: var(--primary); }
 
-        .search-input {
-            width: 100%;
-            padding: 0.85rem 1rem;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            font-size: 1rem;
-            outline: none;
-        }
+        .search-input { width: 100%; padding: 0.85rem 1rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; outline: none; }
+        .client-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
 
-        .client-list-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1rem;
-        }
-
-        .client-item-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 1.25rem;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-        }
-
-        .client-item-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
-        }
-
+        .client-item-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; gap: 0.4rem; }
+        .client-item-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1); }
         .client-item-header { display: flex; justify-content: space-between; align-items: center; }
-
-        .client-number-tag {
-            font-size: 0.75rem;
-            background: #e2e8f0;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-weight: 600;
-            color: var(--text-light);
-        }
-
+        .client-number-tag { font-size: 0.75rem; background: #e2e8f0; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; color: var(--text-light); }
         .badge-status { font-size: 0.85rem; font-weight: 700; margin-top: 0.5rem; }
         .text-pending { color: var(--warning); }
         .text-completed { color: var(--primary); }
 
-        /* VISTA DE CLIENTE ÚNICO */
-        .single-client-view {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 0.75rem;
-            background: #f8fafc;
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            font-size: 0.9rem;
-        }
-
-        .modal-financials {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 1rem;
-            background: #f1f5f9;
-            padding: 1rem;
-            border-radius: 8px;
-        }
-
-        .fin-box label {
-            font-size: 0.75rem;
-            color: var(--text-light);
-            text-transform: uppercase;
-            font-weight: 600;
-            display: block;
-        }
-
+        .single-client-view { display: flex; flex-direction: column; gap: 1.25rem; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; }
+        .modal-financials { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; background: #f1f5f9; padding: 1rem; border-radius: 8px; }
+        .fin-box label { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; font-weight: 600; display: block; }
         .fin-box span { font-size: 1.15rem; font-weight: 700; }
 
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--border); text-align: left; font-size: 0.9rem; }
         th { background-color: #f8fafc; color: var(--text-light); font-weight: 600; }
-
         .late-fee-tag { color: var(--danger); font-size: 0.85rem; font-weight: 600; }
         .net-credit-tag { color: var(--success); font-size: 0.9rem; font-weight: 700; }
 
-        /* MODAL ADMIN */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(4px);
-            display: none;
-            justify-content: center; align-items: center;
-            z-index: 1000; padding: 1rem;
-        }
-
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 1rem; }
         .modal-overlay.active { display: flex; }
-
-        .modal-content {
-            background: var(--card-bg);
-            border-radius: 12px;
-            max-width: 750px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--border);
-        }
-
-        .modal-header {
-            background: #f8fafc;
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky; top: 0; z-index: 10;
-        }
-
+        .modal-content { background: var(--card-bg); border-radius: 12px; max-width: 750px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); border: 1px solid var(--border); }
+        .modal-header { background: #f8fafc; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
         .btn-close { background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light); }
-
-        .add-payment-card {
-            background: #f8fafc;
-            padding: 1.25rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .payment-inputs-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 0.75rem;
-            align-items: end;
-        }
-
+        .add-payment-card { background: #f8fafc; padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.75rem; }
+        .payment-inputs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; align-items: end; }
         .payment-inputs-grid input { padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; width: 100%; }
-
-        .calculation-preview {
-            font-size: 0.85rem;
-            color: var(--primary);
-            font-weight: 600;
-            background: #eff6ff;
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
-            border: 1px solid #bfdbfe;
-        }
-
+        .calculation-preview { font-size: 0.85rem; color: var(--primary); font-weight: 600; background: #eff6ff; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #bfdbfe; }
         .empty-state { text-align: center; color: var(--text-light); padding: 2rem 0; grid-column: 1 / -1; }
     </style>
 </head>
@@ -334,7 +97,7 @@
         <div id="adminView" style="display: none; flex-direction: column; gap: 1.5rem;">
             <header>
                 <h1>Gestión de Clientes y Cobranza</h1>
-                <p>Panel de Administración</p>
+                <p>Panel de Administración (En la Nube)</p>
             </header>
 
             <section class="card">
@@ -435,7 +198,6 @@
                 </div>
             </div>
 
-            <!-- Botón de WhatsApp para el cliente -->
             <a id="btnShareClientWhatsApp" target="_blank" class="btn btn-whatsapp">
                 📲 Compartir / Enviar Estado de Cuenta por WhatsApp
             </a>
@@ -456,7 +218,7 @@
 
     </div>
 
-    <!-- MODAL DE DETALLES PARA EL ADMIN (Al hacer clic en la tarjeta del cliente) -->
+    <!-- MODAL DE DETALLES PARA EL ADMIN -->
     <div id="clientModal" class="modal-overlay" onclick="closeModalOnOverlay(event)">
         <div class="modal-content">
             <div class="modal-header">
@@ -491,7 +253,6 @@
                     </div>
                 </div>
 
-                <!-- BOTÓN DE COMPARTIR POR WHATSAPP AL ABRIR EL DETALLE DE PAGO DEL CLIENTE -->
                 <a id="btnShareAdminWhatsApp" target="_blank" class="btn btn-whatsapp">
                     📲 Enviar enlace a este cliente por WhatsApp
                 </a>
@@ -543,20 +304,25 @@
     </div>
 
     <script>
-        let clients = JSON.parse(localStorage.getItem('clientsData_v7')) || [];
+        // CONFIGURACIÓN BASE DE DATOS PÚBLICA GRATUITA (Firebase)
+        const firebaseConfig = {
+            databaseURL: "https://cobranza-app-demo-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let clients = [];
         let activeClientId = null;
 
-        // Formato Moneda
         const formatCurrency = (amount) => {
             return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
         };
 
-        // Generar enlace de WhatsApp con el estado de cuenta
         function generateWhatsAppLink(client) {
-            const totalNetPaid = client.payments.reduce((sum, p) => sum + p.netAmount, 0);
+            const payments = client.payments || [];
+            const totalNetPaid = payments.reduce((sum, p) => sum + (p.netAmount || 0), 0);
             const pendingBalance = client.totalPrice - totalNetPaid;
             
-            // Crea el enlace directo a la vista individual del cliente
             const clientUrl = `${window.location.origin}${window.location.pathname}?cliente=${client.number}`;
 
             const text = `Hola *${client.name}*, aquí tienes tu estado de cuenta actualizado:%0A%0A` +
@@ -564,39 +330,50 @@
                          `💰 *Precio Total:* ${formatCurrency(client.totalPrice)}%0A` +
                          `✅ *Total Abonado:* ${formatCurrency(totalNetPaid)}%0A` +
                          `🔻 *Saldo Pendiente:* ${formatCurrency(pendingBalance)}%0A%0A` +
-                         `📱 Puedes consultar tu estado de cuenta completo en cualquier momento aquí:%0A${clientUrl}`;
+                         `📱 Puedes consultar tu estado de cuenta completo aquí:%0A${clientUrl}`;
 
             return `https://api.whatsapp.com/send?text=${text}`;
         }
 
-        // Detectar si la URL trae un parámetro de cliente (Ej: ?cliente=CLI-001)
+        // Sincronización en Tiempo Real con la Nube
+        database.ref('clients').on('value', (snapshot) => {
+            const data = snapshot.val();
+            clients = [];
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    clients.push({ id: key, ...data[key] });
+                });
+            }
+            initApp();
+        });
+
         function initApp() {
             const urlParams = new URLSearchParams(window.location.search);
             const clientParam = urlParams.get('cliente');
 
             if (clientParam) {
-                // MODO CLIENTE: Buscar cliente y mostrar tarjeta exclusiva
                 const client = clients.find(c => c.number.toLowerCase() === clientParam.toLowerCase());
                 if (client) {
                     showSingleClientView(client);
                 } else {
-                    document.getElementById('singleClientContainer').style.display = 'block';
-                    document.getElementById('singleClientContainer').innerHTML = '<h2>Cliente no encontrado.</h2>';
+                    document.getElementById('adminView').style.display = 'none';
+                    const container = document.getElementById('singleClientContainer');
+                    container.style.display = 'block';
+                    container.innerHTML = '<h2>Cargando o Cliente no encontrado...</h2>';
                 }
             } else {
-                // MODO ADMIN: Mostrar todo el panel
                 document.getElementById('adminView').style.display = 'flex';
-                renderUI();
+                renderUI(document.getElementById('searchInput').value);
             }
         }
 
-        // Mostrar únicamente la vista individual del cliente
         function showSingleClientView(client) {
             document.getElementById('adminView').style.display = 'none';
             const container = document.getElementById('singleClientContainer');
             container.style.display = 'flex';
 
-            const totalNetPaid = client.payments.reduce((sum, p) => sum + p.netAmount, 0);
+            const payments = client.payments || [];
+            const totalNetPaid = payments.reduce((sum, p) => sum + (p.netAmount || 0), 0);
             const pendingBalance = client.totalPrice - totalNetPaid;
 
             document.getElementById('singleClientNumber').textContent = `N° ${client.number}`;
@@ -610,16 +387,14 @@
             document.getElementById('singleTotalPaid').textContent = formatCurrency(totalNetPaid);
             document.getElementById('singlePendingBalance').textContent = pendingBalance <= 0 ? '¡PAGADO!' : formatCurrency(pendingBalance);
 
-            // Botón de WhatsApp vista cliente
             document.getElementById('btnShareClientWhatsApp').href = generateWhatsAppLink(client);
 
-            // Tabla de pagos
             const tbody = document.getElementById('singlePaymentsTableBody');
             tbody.innerHTML = '';
-            if (client.payments.length === 0) {
+            if (payments.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Sin abonos registrados.</td></tr>';
             } else {
-                client.payments.forEach(p => {
+                payments.forEach(p => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${p.date}</td>
@@ -632,7 +407,6 @@
             }
         }
 
-        // MODO ADMIN: Renderizar lista principal
         function renderUI(filterText = '') {
             const container = document.getElementById('clientsListContainer');
             container.innerHTML = '';
@@ -648,7 +422,8 @@
                 container.innerHTML = `<div class="card empty-state">${clients.length === 0 ? 'No hay clientes registrados.' : 'Sin resultados.'}</div>`;
             } else {
                 filteredClients.forEach((client) => {
-                    const totalNetPaid = client.payments.reduce((sum, p) => sum + p.netAmount, 0);
+                    const payments = client.payments || [];
+                    const totalNetPaid = payments.reduce((sum, p) => sum + (p.netAmount || 0), 0);
                     const pendingBalance = client.totalPrice - totalNetPaid;
 
                     const card = document.createElement('div');
@@ -678,7 +453,10 @@
         function updateMetrics() {
             document.getElementById('totalClients').textContent = clients.length;
             let totalNetRevenue = 0;
-            clients.forEach(c => totalNetRevenue += c.payments.reduce((sum, p) => sum + p.netAmount, 0));
+            clients.forEach(c => {
+                const payments = c.payments || [];
+                totalNetRevenue += payments.reduce((sum, p) => sum + (p.netAmount || 0), 0);
+            });
             document.getElementById('totalRevenue').textContent = formatCurrency(totalNetRevenue);
         }
 
@@ -698,7 +476,8 @@
             const client = clients.find(c => c.id === activeClientId);
             if (!client) { closeModal(); return; }
 
-            const totalNetPaid = client.payments.reduce((sum, p) => sum + p.netAmount, 0);
+            const payments = client.payments || [];
+            const totalNetPaid = payments.reduce((sum, p) => sum + (p.netAmount || 0), 0);
             const pendingBalance = client.totalPrice - totalNetPaid;
 
             document.getElementById('modalClientNumber').textContent = `N° ${client.number}`;
@@ -713,15 +492,14 @@
             document.getElementById('modalTotalPaid').textContent = formatCurrency(totalNetPaid);
             document.getElementById('modalPendingBalance').textContent = pendingBalance <= 0 ? '¡PAGADO!' : formatCurrency(pendingBalance);
 
-            // Asigna el enlace de WhatsApp al botón dentro de la modal de abonos
             document.getElementById('btnShareAdminWhatsApp').href = generateWhatsAppLink(client);
 
             const tbody = document.getElementById('modalPaymentsTableBody');
             tbody.innerHTML = '';
-            if (client.payments.length === 0) {
+            if (payments.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Sin abonos.</td></tr>';
             } else {
-                client.payments.forEach((p, index) => {
+                payments.forEach((p, index) => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${p.date}</td>
@@ -761,11 +539,11 @@
         document.getElementById('modalPaymentAmount').addEventListener('input', updateCalcPreview);
         document.getElementById('modalLateFeeAmount').addEventListener('input', updateCalcPreview);
 
-        // Guardar Cliente
+        // Guardar Cliente en la Nube
         document.getElementById('newClientForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            const newClient = {
-                id: Date.now().toString(),
+            const newClientRef = database.ref('clients').push();
+            newClientRef.set({
                 number: document.getElementById('clientNumber').value.trim(),
                 name: document.getElementById('clientName').value.trim(),
                 address: document.getElementById('clientAddress').value.trim(),
@@ -775,15 +553,11 @@
                 payDay: document.getElementById('payDay').value,
                 lateFee: parseFloat(document.getElementById('lateFee').value),
                 payments: []
-            };
-
-            clients.unshift(newClient);
-            localStorage.setItem('clientsData_v7', JSON.stringify(clients));
-            renderUI(document.getElementById('searchInput').value);
+            });
             e.target.reset();
         });
 
-        // Registrar Abono
+        // Registrar Abono en la Nube
         document.getElementById('modalAddPaymentForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const gross = parseFloat(document.getElementById('modalPaymentAmount').value) || 0;
@@ -791,15 +565,15 @@
             const client = clients.find(c => c.id === activeClientId);
 
             if (client && gross > 0) {
-                client.payments.push({
+                const currentPayments = client.payments || [];
+                currentPayments.push({
                     date: new Date().toLocaleDateString('es-MX'),
                     grossAmount: gross,
                     lateFee: fee,
                     netAmount: Math.max(0, gross - fee)
                 });
 
-                localStorage.setItem('clientsData_v7', JSON.stringify(clients));
-                renderUI(document.getElementById('searchInput').value);
+                database.ref('clients/' + activeClientId + '/payments').set(currentPayments);
                 document.getElementById('modalPaymentAmount').value = client.weeklyAmount || '';
                 document.getElementById('modalLateFeeAmount').value = '0.00';
                 updateCalcPreview();
@@ -810,24 +584,18 @@
             const client = clients.find(c => c.id === activeClientId);
             if (client && confirm('¿Eliminar abono?')) {
                 client.payments.splice(index, 1);
-                localStorage.setItem('clientsData_v7', JSON.stringify(clients));
-                renderUI(document.getElementById('searchInput').value);
+                database.ref('clients/' + activeClientId + '/payments').set(client.payments);
             }
         }
 
         function deleteClient(id) {
-            if (confirm('¿Eliminar cliente completo?')) {
-                clients = clients.filter(c => c.id !== id);
-                localStorage.setItem('clientsData_v7', JSON.stringify(clients));
+            if (confirm('¿Eliminar cliente completo de la base de datos?')) {
+                database.ref('clients/' + id).remove();
                 closeModal();
-                renderUI(document.getElementById('searchInput').value);
             }
         }
 
         document.getElementById('searchInput').addEventListener('input', (e) => renderUI(e.target.value));
-
-        // Inicializar
-        initApp();
     </script>
 </body>
 </html>
